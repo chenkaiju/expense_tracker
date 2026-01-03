@@ -3,7 +3,7 @@
  */
 
 const getApiUrl = () => {
-  return localStorage.getItem('EXPENSE_TRACKER_API_URL');
+  return import.meta.env.VITE_API_URL || localStorage.getItem('EXPENSE_TRACKER_API_URL');
 };
 
 export const setApiUrl = (url) => {
@@ -13,7 +13,7 @@ export const setApiUrl = (url) => {
 export const fetchTransactions = async () => {
   const url = getApiUrl();
   if (!url) return [];
-  
+
   try {
     const response = await fetch(url);
     if (!response.ok) throw new Error('Network response was not ok');
@@ -27,7 +27,7 @@ export const fetchTransactions = async () => {
 export const addTransaction = async (transaction) => {
   const url = getApiUrl();
   if (!url) throw new Error('API URL not set');
-  
+
   try {
     const response = await fetch(url, {
       method: 'POST',

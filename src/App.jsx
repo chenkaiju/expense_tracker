@@ -5,8 +5,8 @@ import './index.css';
 function App() {
   const [transactions, setTransactions] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [apiUrl, setApiUrl] = useState(localStorage.getItem('EXPENSE_TRACKER_API_URL') || '');
-  const [isSetup, setIsSetup] = useState(!!localStorage.getItem('EXPENSE_TRACKER_API_URL'));
+  const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_URL || localStorage.getItem('EXPENSE_TRACKER_API_URL') || '');
+  const [isSetup, setIsSetup] = useState(!!(import.meta.env.VITE_API_URL || localStorage.getItem('EXPENSE_TRACKER_API_URL')));
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
