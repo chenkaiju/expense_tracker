@@ -114,17 +114,22 @@ function App() {
       </div>
 
       <div className="transaction-list">
-        {transactions.map((t, i) => (
-          <div key={i} className="transaction-item">
-            <div className="transaction-info">
-              <span className="transaction-title">{t.Description || t.Category}</span>
-              <span className="transaction-meta">{t.Date ? new Date(t.Date).toLocaleDateString() : ''} • {t.Category}</span>
+        {transactions.map((t, i) => {
+          if (!t || !t.Type) return null;
+          const type = (t.Type || 'Expense').toLowerCase();
+          const amount = parseFloat(t.Amount || 0);
+          return (
+            <div key={i} className="transaction-item">
+              <div className="transaction-info">
+                <span className="transaction-title">{t.Description || t.Category || 'Untitled'}</span>
+                <span className="transaction-meta">{t.Date ? new Date(t.Date).toLocaleDateString() : ''} • {t.Category || 'Other'}</span>
+              </div>
+              <div className={`transaction-amount amount-${type}`}>
+                {t.Type === 'Income' ? '+' : '-'}${amount.toLocaleString()}
+              </div>
             </div>
-            <div className={`transaction-amount amount-${t.Type.toLowerCase()}`}>
-              {t.Type === 'Income' ? '+' : '-'}${parseFloat(t.Amount || 0).toLocaleString()}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <button className="fab" onClick={() => setIsModalOpen(true)}>+</button>
