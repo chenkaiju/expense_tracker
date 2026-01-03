@@ -24,8 +24,17 @@ function App() {
 
   const loadData = async () => {
     setLoading(true);
-    const data = await fetchTransactions();
-    setTransactions(data.reverse()); // Show newest first
+    try {
+      const data = await fetchTransactions();
+      if (Array.isArray(data)) {
+        setTransactions([...data].reverse()); // Use spread to avoid mutating if necessary
+      } else {
+        console.error('Data received is not an array:', data);
+        setTransactions([]);
+      }
+    } catch (err) {
+      console.error('Failed to load data:', err);
+    }
     setLoading(false);
   };
 
