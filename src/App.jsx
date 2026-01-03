@@ -133,10 +133,16 @@ function App() {
         </button>
       </div>
 
+      {transactions.length > 0 && (
+        <pre style={{ fontSize: '10px', color: '#aaa', overflow: 'hidden', whiteSpace: 'pre-wrap', marginBottom: '10px' }}>
+          DEBUG: {JSON.stringify(transactions[0])}
+        </pre>
+      )}
+
       <div className="transaction-list">
         {transactions.map((t, i) => {
-          // Keys are normalized to lowercase
-          if (!t || !t.type) return null;
+          // Relaxed check: render even if minimal data
+          if (!t) return null;
           const type = (t.type || 'expense').toLowerCase();
           const amount = parseFloat(t.amount || 0);
           return (
