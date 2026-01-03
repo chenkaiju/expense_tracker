@@ -27,7 +27,15 @@ function App() {
     try {
       const data = await fetchTransactions();
       if (Array.isArray(data)) {
-        setTransactions([...data].reverse()); // Use spread to avoid mutating if necessary
+        // Normalize keys to lowercase to avoid case sensitivity issues
+        const normalizedData = data.map(item => {
+          const newItem = {};
+          Object.keys(item).forEach(key => {
+            newItem[key.toLowerCase()] = item[key];
+          });
+          return newItem;
+        });
+        setTransactions(normalizedData.reverse());
       } else {
         console.error('Data received is not an array:', data);
         setTransactions([]);
@@ -127,17 +135,18 @@ function App() {
 
       <div className="transaction-list">
         {transactions.map((t, i) => {
-          if (!t || !t.Type) return null;
-          const type = (t.Type || 'Expense').toLowerCase();
-          const amount = parseFloat(t.Amount || 0);
+          // Keys are normalized to lowercase
+          if (!t || !t.type) return null;
+          const type = (t.type || 'expense').toLowerCase();
+          const amount = parseFloat(t.amount || 0);
           return (
             <div key={i} className="transaction-item">
               <div className="transaction-info">
-                <span className="transaction-title">{t.Description || t.Category || 'Untitled'}</span>
-                <span className="transaction-meta">{t.Date ? new Date(t.Date).toLocaleDateString() : ''} • {t.Category || 'Other'}</span>
+                <span className="transaction-title">{t.description || t.category || 'Untitled'}</span>
+                <span className="transaction-meta">{t.date ? new Date(t.date).toLocaleDateString() : ''} • {t.category || 'Other'}</span>
               </div>
               <div className={`transaction-amount amount-${type}`}>
-                {t.Type === 'Income' ? '+' : '-'}${amount.toLocaleString()}
+                {t.type === 'Income' ? '+' : '-'}${amount.toLocaleString()}
               </div>
             </div>
           );
