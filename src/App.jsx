@@ -27,11 +27,17 @@ function App() {
     try {
       const data = await fetchTransactions();
       if (Array.isArray(data)) {
-        // Normalize keys to lowercase to avoid case sensitivity issues
+        // Normalize keys and map standard names
         const normalizedData = data.map(item => {
           const newItem = {};
           Object.keys(item).forEach(key => {
-            newItem[key.toLowerCase()] = item[key];
+            const lowerKey = key.toLowerCase();
+            if (lowerKey.includes('date')) newItem.date = item[key];
+            else if (lowerKey.includes('amount')) newItem.amount = item[key];
+            else if (lowerKey.includes('category')) newItem.category = item[key];
+            else if (lowerKey.includes('description')) newItem.description = item[key];
+            else if (lowerKey.includes('type')) newItem.type = item[key]; // Handles 'type (income/expense)'
+            else newItem[lowerKey] = item[key];
           });
           return newItem;
         });
@@ -132,12 +138,6 @@ function App() {
           {loading ? '...' : 'Refresh'}
         </button>
       </div>
-
-      {transactions.length > 0 && (
-        <pre style={{ fontSize: '10px', color: '#aaa', overflow: 'hidden', whiteSpace: 'pre-wrap', marginBottom: '10px' }}>
-          DEBUG: {JSON.stringify(transactions[0])}
-        </pre>
-      )}
 
       <div className="transaction-list">
         {transactions.map((t, i) => {
