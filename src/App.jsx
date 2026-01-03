@@ -58,11 +58,11 @@ function App() {
   };
 
   const totalIncome = transactions
-    .filter(t => t.Type === 'Income')
+    .filter(t => t && t.Type === 'Income')
     .reduce((acc, curr) => acc + parseFloat(curr.Amount || 0), 0);
 
   const totalExpense = transactions
-    .filter(t => t.Type === 'Expense')
+    .filter(t => t && t.Type === 'Expense')
     .reduce((acc, curr) => acc + parseFloat(curr.Amount || 0), 0);
 
   const balance = totalIncome - totalExpense;
