@@ -15,7 +15,9 @@ export const fetchTransactions = async () => {
   if (!url) return [];
 
   try {
-    const response = await fetch(url);
+    // 加上 ?t=時間戳記，防止瀏覽器讀取舊的緩存
+    const cacheBuster = url.includes('?') ? `&t=${Date.now()}` : `?t=${Date.now()}`;
+    const response = await fetch(url + cacheBuster);
     if (!response.ok) throw new Error('Network response was not ok');
     return await response.json();
   } catch (error) {
