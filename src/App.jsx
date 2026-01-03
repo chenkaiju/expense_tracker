@@ -81,12 +81,12 @@ function App() {
   };
 
   const totalIncome = transactions
-    .filter(t => t && t.Type === 'Income')
-    .reduce((acc, curr) => acc + parseFloat(curr.Amount || 0), 0);
+    .filter(t => t && t.type && t.type.toLowerCase() === 'income')
+    .reduce((acc, curr) => acc + parseFloat(curr.amount || 0), 0);
 
   const totalExpense = transactions
-    .filter(t => t && t.Type === 'Expense')
-    .reduce((acc, curr) => acc + parseFloat(curr.Amount || 0), 0);
+    .filter(t => t && t.type && t.type.toLowerCase() === 'expense')
+    .reduce((acc, curr) => acc + parseFloat(curr.amount || 0), 0);
 
   const balance = totalIncome - totalExpense;
 
