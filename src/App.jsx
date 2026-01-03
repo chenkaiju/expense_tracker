@@ -117,6 +117,9 @@ function App() {
 
       <div className="section-header" style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h3>Recent Activity</h3>
+        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+          {transactions.length} items found
+        </div>
         <button onClick={loadData} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}>
           {loading ? '...' : 'Refresh'}
         </button>
