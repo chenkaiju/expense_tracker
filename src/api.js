@@ -29,7 +29,15 @@ export const fetchTransactions = async () => {
 const formatDateToTaiwan = (dateInput) => {
   if (!dateInput) return '';
   const date = new Date(dateInput);
-  return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
+  // Use Intl.DateTimeFormat to strictly get YYYY, MM, DD in Taiwan time
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Taipei',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  // en-CA outputs YYYY-MM-DD
+  return formatter.format(date);
 };
 
 export const addTransaction = async (transaction) => {
