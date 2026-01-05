@@ -31,10 +31,13 @@ body {
   width: 100%;
   max-width: 500px;
   padding: 20px;
-  padding-bottom: 100px; /* Space for fab */
+  padding-bottom: 100px;
+  /* Space for fab */
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   font-weight: 700;
   letter-spacing: -0.025em;
 }
@@ -94,8 +97,13 @@ h1, h2, h3 {
   font-size: 1.125rem;
 }
 
-.income .stat-value { color: var(--success); }
-.expense .stat-value { color: var(--danger); }
+.income .stat-value {
+  color: var(--success);
+}
+
+.expense .stat-value {
+  color: var(--danger);
+}
 
 .transaction-list {
   display: flex;
@@ -137,8 +145,13 @@ h1, h2, h3 {
   font-size: 1rem;
 }
 
-.amount-expense { color: var(--danger); }
-.amount-income { color: var(--success); }
+.amount-expense {
+  color: var(--danger);
+}
+
+.amount-income {
+  color: var(--success);
+}
 
 .transaction-right {
   text-align: right;
@@ -147,16 +160,25 @@ h1, h2, h3 {
   align-items: flex-end;
 }
 
-.edit-hint {
-  font-size: 0.65rem;
+.edit-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 8px;
+  padding: 4px 12px;
   color: var(--text-secondary);
-  opacity: 0.5;
+  font-size: 0.75rem;
   margin-top: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.transaction-item:hover .edit-hint {
-  opacity: 1;
-  color: var(--primary);
+.edit-btn:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.transaction-item {
+  cursor: pointer;
 }
 
 /* Form Styles */
@@ -171,7 +193,8 @@ label {
   margin-bottom: 6px;
 }
 
-input, select {
+input,
+select {
   width: 100%;
   padding: 12px 16px;
   background: rgba(255, 255, 255, 0.05);
@@ -269,8 +292,14 @@ input:focus {
   text-align: center;
 }
 
-.setup-overlay h2 { margin-bottom: 20px; }
-.setup-overlay p { color: var(--text-secondary); margin-bottom: 30px; }
+.setup-overlay h2 {
+  margin-bottom: 20px;
+}
+
+.setup-overlay p {
+  color: var(--text-secondary);
+  margin-bottom: 30px;
+}
 
 @media (max-width: 480px) {
   #root {

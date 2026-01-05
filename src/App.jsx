@@ -180,7 +180,15 @@ function App() {
                 <div className={`transaction-amount amount-${type}`}>
                   {type === 'income' ? '+' : '-'}${amount.toLocaleString()}
                 </div>
-                <div className="edit-hint">Tap to edit</div>
+                <button
+                  className="edit-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(t);
+                  }}
+                >
+                  Edit
+                </button>
               </div>
             </div>
           );
