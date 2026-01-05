@@ -1,36 +1,49 @@
 import { useState, useMemo } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
 
 const Statistics = ({ transactions }) => {
     const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+    const [selectedCategory, setSelectedCategory] = useState(null);
 
-    const monthlyData = useMemo(() => {
+    const statsData = useMemo(() => {
         // 1. Filter by month and Expense type
-        const filtered = transactions.filter(t => {
+        let filtered = transactions.filter(t => {
             if (!t.date || !t.type || t.type.toLowerCase() !== 'expense') return false;
-            return t.date.startsWith(currentMonth); // Assumes YYYY-MM-DD
+            return t.date.startsWith(currentMonth);
         });
 
-        // 2. Group by category
+        // 2. If category selected, filter by that category
+        if (selectedCategory) {
+            filtered = filtered.filter(t => t.category === selectedCategory);
+        }
+
+        // 3. Group by Category (if root) or Sub Category (if selected)
         const grouped = filtered.reduce((acc, curr) => {
-            const cat = curr.category || 'Other';
+            let key;
+            if (selectedCategory) {
+                key = curr['sub category'] || 'Uncategorized';
+            } else {
+                key = curr.category || 'Other';
+            }
+
             const amount = parseFloat(curr.amount || 0);
-            acc[cat] = (acc[cat] || 0) + amount;
+            acc[key] = (acc[key] || 0) + amount;
             return acc;
         }, {});
 
-        // 3. Convert to array for Recharts
+        // 4. Convert to array for Recharts
         const data = Object.keys(grouped).map(key => ({
             name: key,
             value: grouped[key]
         })).sort((a, b) => b.value - a.value);
 
+        // Calculate total for the CURRENT view
         const total = data.reduce((sum, item) => sum + item.value, 0);
 
         return { data, total };
-    }, [transactions, currentMonth]);
+    }, [transactions, currentMonth, selectedCategory]);
 
     const availableMonths = useMemo(() => {
         const months = new Set();
@@ -40,13 +53,43 @@ const Statistics = ({ transactions }) => {
         return Array.from(months).sort().reverse();
     }, [transactions]);
 
+    const handleSliceClick = (entry) => {
+        if (!selectedCategory) {
+            setSelectedCategory(entry.name);
+        }
+    };
+
     return (
         <div className="statistics-container" style={{ padding: '20px', animation: 'fadeIn 0.3s ease' }}>
             <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2>Statistics</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {selectedCategory && (
+                        <button
+                            onClick={() => setSelectedCategory(null)}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'white',
+                                cursor: 'pointer',
+                                padding: '4px',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M15 18l-6-6 6-6" />
+                            </svg>
+                        </button>
+                    )}
+                    <h2 style={{ margin: 0 }}>{selectedCategory || 'Statistics'}</h2>
+                </div>
+
                 <select
                     value={currentMonth}
-                    onChange={(e) => setCurrentMonth(e.target.value)}
+                    onChange={(e) => {
+                        setCurrentMonth(e.target.value);
+                        setSelectedCategory(null); // Reset drill-down on month change
+                    }}
                     style={{
                         padding: '5px 10px',
                         borderRadius: '10px',
@@ -66,26 +109,36 @@ const Statistics = ({ transactions }) => {
             </div>
 
             <div className="total-expense" style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Total Expense</div>
-                <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>${monthlyData.total.toLocaleString()}</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                    {selectedCategory ? `${selectedCategory} Total` : 'Total Expense'}
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                    ${statsData.total.toLocaleString()}
+                </div>
             </div>
 
-            {monthlyData.data.length > 0 ? (
+            {statsData.data.length > 0 ? (
                 <>
                     <div style={{ height: '250px', marginBottom: '20px' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={monthlyData.data}
+                                    data={statsData.data}
                                     cx="50%"
                                     cy="50%"
                                     innerRadius={60}
                                     outerRadius={80}
                                     paddingAngle={5}
                                     dataKey="value"
+                                    onClick={handleSliceClick}
+                                    style={{ cursor: !selectedCategory ? 'pointer' : 'default' }}
                                 >
-                                    {monthlyData.data.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    {statsData.data.map((entry, index) => (
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill={COLORS[index % COLORS.length]}
+                                            style={{ outline: 'none' }}
+                                        />
                                     ))}
                                 </Pie>
                                 <Tooltip
@@ -94,27 +147,41 @@ const Statistics = ({ transactions }) => {
                                 />
                             </PieChart>
                         </ResponsiveContainer>
+                        {!selectedCategory && (
+                            <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#aaa', marginTop: '-10px' }}>
+                                Tap a slice to see details
+                            </div>
+                        )}
                     </div>
 
                     <div className="stats-list">
-                        {monthlyData.data.map((item, index) => (
-                            <div key={index} style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                padding: '12px',
-                                marginBottom: '8px',
-                                background: 'rgba(255, 255, 255, 0.05)',
-                                borderRadius: '12px'
-                            }}>
+                        {statsData.data.map((item, index) => (
+                            <div
+                                key={index}
+                                onClick={() => handleSliceClick(item)}
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '12px',
+                                    marginBottom: '8px',
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    borderRadius: '12px',
+                                    cursor: !selectedCategory ? 'pointer' : 'default',
+                                    transition: 'transform 0.2s',
+                                    transform: 'scale(1)'
+                                }}
+                                onMouseEnter={(e) => { if (!selectedCategory) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)' }}
+                                onMouseLeave={(e) => { if (!selectedCategory) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)' }}
+                            >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: COLORS[index % COLORS.length] }}></div>
-                                    <span>{item.name}</span>
+                                    <span style={{ fontWeight: 500 }}>{item.name}</span>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                    <span>${item.value.toLocaleString()}</span>
+                                    <span style={{ fontWeight: 'bold' }}>${item.value.toLocaleString()}</span>
                                     <span style={{ fontSize: '0.8rem', color: '#aaa' }}>
-                                        {((item.value / monthlyData.total) * 100).toFixed(1)}%
+                                        {statsData.total > 0 ? ((item.value / statsData.total) * 100).toFixed(1) : 0}%
                                     </span>
                                 </div>
                             </div>
@@ -123,7 +190,7 @@ const Statistics = ({ transactions }) => {
                 </>
             ) : (
                 <div style={{ textAlign: 'center', color: '#aaa', marginTop: '50px' }}>
-                    No expenses found for this month.
+                    No expenses found for this period.
                 </div>
             )}
         </div>
