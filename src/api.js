@@ -26,8 +26,10 @@ export const fetchTransactions = async () => {
   }
 };
 
-const getTaiwanDate = () => {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
+const formatDateToTaiwan = (dateInput) => {
+  if (!dateInput) return '';
+  const date = new Date(dateInput);
+  return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
 };
 
 export const addTransaction = async (transaction) => {
@@ -44,7 +46,7 @@ export const addTransaction = async (transaction) => {
       body: JSON.stringify({
         ...transaction,
         'sub category': transaction.subCategory || '', // Map to "Sub Category" column
-        date: getTaiwanDate()
+        date: formatDateToTaiwan(new Date())
       }),
     });
     // With no-cors, we can't read the response body, but we can assume success if no error
@@ -70,6 +72,7 @@ export const updateTransaction = async (transaction) => {
         'sub category': transaction.subCategory || '',
         row: transaction.row || transaction.id,
         sheetName: transaction.sheetName, // Pass sheetName for targeting
+        date: formatDateToTaiwan(transaction.date), // Ensure date is formatted to YYYY-MM-DD (Taiwan)
         action: 'update'
       }),
     });
