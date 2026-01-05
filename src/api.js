@@ -67,8 +67,9 @@ export const updateTransaction = async (transaction) => {
       },
       body: JSON.stringify({
         ...transaction,
-        'sub category': transaction.subCategory || '', // Map to "Sub Category" column
-        row: transaction.row || transaction.id, // Map id to row for backend
+        'sub category': transaction.subCategory || '',
+        row: transaction.row || transaction.id,
+        sheetName: transaction.sheetName, // Pass sheetName for targeting
         action: 'update'
       }),
     });
@@ -79,7 +80,7 @@ export const updateTransaction = async (transaction) => {
   }
 };
 
-export const deleteTransaction = async (rowId) => {
+export const deleteTransaction = async (rowId, sheetName) => {
   const url = getApiUrl();
   if (!url) throw new Error('API URL not set');
 
@@ -92,6 +93,7 @@ export const deleteTransaction = async (rowId) => {
       },
       body: JSON.stringify({
         row: rowId,
+        sheetName: sheetName, // Pass sheetName for targeting
         action: 'delete'
       }),
     });

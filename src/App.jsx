@@ -109,7 +109,7 @@ function App() {
       setLoading(true);
       try {
         const rowId = transaction.row || transaction.id;
-        await deleteTransaction(rowId);
+        await deleteTransaction(rowId, transaction.sheetName);
         // Reload after deletion
         setTimeout(loadData, 2000);
       } catch (error) {
