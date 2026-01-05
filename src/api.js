@@ -49,3 +49,25 @@ export const addTransaction = async (transaction) => {
     throw error;
   }
 };
+export const updateTransaction = async (transaction) => {
+  const url = getApiUrl();
+  if (!url) throw new Error('API URL not set');
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...transaction,
+        action: 'update'
+      }),
+    });
+    return { status: 'success' };
+  } catch (error) {
+    console.error('Update error:', error);
+    throw error;
+  }
+};

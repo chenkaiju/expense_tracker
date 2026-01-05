@@ -1,8 +1,20 @@
-# React + Vite
+# React + Vite Expense Tracker
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Currently, two official plugins are available:
+## Backend Setup (Google Apps Script)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This project uses Google Sheets as a database via Google Apps Script.
+
+1. Create a Google Sheet with headers: `Date`, `Amount`, `Category`, `Description`, `Type`.
+2. Go to **Extensions** > **Apps Script**.
+3. Copy the content of [google-apps-script.js](./google-apps-script.js) into the script editor.
+4. Click **Deploy** > **New Deployment** > **Web App**.
+5. Set "Execute as" to **Me** and "Who has access" to **Anyone**.
+6. Copy the Web App URL and paste it into the app's setup screen.
+
+## Features
+- ✨ Glassmorphism UI
+- 📊 Income/Expense tracking
+- ✏️ Edit existing transactions
+- ☁️ Sync with Google Sheets

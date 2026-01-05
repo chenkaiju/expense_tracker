@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { fetchTransactions, addTransaction, setApiUrl as saveApiUrl } from './api';
+import { fetchTransactions, addTransaction, updateTransaction, setApiUrl as saveApiUrl } from './api';
 import './index.css';
 
 function App() {
   const [transactions, setTransactions] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
   const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_URL || localStorage.getItem('EXPENSE_TRACKER_API_URL') || '');
   const [isSetup, setIsSetup] = useState(!!(import.meta.env.VITE_API_URL || localStorage.getItem('EXPENSE_TRACKER_API_URL')));
   const [loading, setLoading] = useState(false);
@@ -28,15 +28,16 @@ function App() {
       const data = await fetchTransactions();
       if (Array.isArray(data)) {
         // Normalize keys and map standard names
-        const normalizedData = data.map(item => {
-          const newItem = {};
+        const normalizedData = data.map((item, index) => {
+          const newItem = { id: index }; // Fallback ID if none exists
           Object.keys(item).forEach(key => {
             const lowerKey = key.toLowerCase();
             if (lowerKey.includes('date')) newItem.date = item[key];
             else if (lowerKey.includes('amount')) newItem.amount = item[key];
             else if (lowerKey.includes('category')) newItem.category = item[key];
             else if (lowerKey.includes('description')) newItem.description = item[key];
-            else if (lowerKey.includes('type')) newItem.type = item[key]; // Handles 'type (income/expense)'
+            else if (lowerKey.includes('type')) newItem.type = item[key];
+            else if (lowerKey === 'id' || lowerKey === 'row') newItem.id = item[key];
             else newItem[lowerKey] = item[key];
           });
           return newItem;
@@ -62,20 +63,45 @@ function App() {
     }
   };
 
+  const openAddModal = () => {
+    setEditingTransaction(null);
+    setFormData({ amount: '', category: 'Food', description: '', type: 'Expense' });
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (transaction) => {
+    setEditingTransaction(transaction);
+    setFormData({
+      amount: transaction.amount,
+      category: transaction.category || 'Food',
+      description: transaction.description || '',
+      type: transaction.type || 'Expense'
+    });
+    setIsModalOpen(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await addTransaction({
-        ...formData,
-        amount: parseFloat(formData.amount)
-      });
+      if (editingTransaction) {
+        await updateTransaction({
+          ...editingTransaction,
+          ...formData,
+          amount: parseFloat(formData.amount)
+        });
+      } else {
+        await addTransaction({
+          ...formData,
+          amount: parseFloat(formData.amount)
+        });
+      }
       setIsModalOpen(false);
       setFormData({ amount: '', category: 'Food', description: '', type: 'Expense' });
-      // Reload after addition - note: no-cors prevents confirming status but we can try refresh
+      // Reload after addition/update
       setTimeout(loadData, 2000);
     } catch (error) {
-      alert('Error adding transaction');
+      alert('Error saving transaction');
     }
     setLoading(false);
   };
@@ -141,30 +167,32 @@ function App() {
 
       <div className="transaction-list">
         {transactions.map((t, i) => {
-          // Relaxed check: render even if minimal data
           if (!t) return null;
           const type = (t.type || 'expense').toLowerCase();
           const amount = parseFloat(t.amount || 0);
           return (
-            <div key={i} className="transaction-item">
+            <div key={i} className="transaction-item" onClick={() => handleEdit(t)}>
               <div className="transaction-info">
                 <span className="transaction-title">{t.description || t.category || 'Untitled'}</span>
                 <span className="transaction-meta">{t.date ? new Date(t.date).toLocaleDateString() : ''} • {t.category || 'Other'}</span>
               </div>
-              <div className={`transaction-amount amount-${type}`}>
-                {t.type === 'Income' ? '+' : '-'}${amount.toLocaleString()}
+              <div className="transaction-right">
+                <div className={`transaction-amount amount-${type}`}>
+                  {type === 'income' ? '+' : '-'}${amount.toLocaleString()}
+                </div>
+                <div className="edit-hint">Tap to edit</div>
               </div>
             </div>
           );
         })}
       </div>
 
-      <button className="fab" onClick={() => setIsModalOpen(true)}>+</button>
+      <button className="fab" onClick={openAddModal}>+</button>
 
       {isModalOpen && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginBottom: '24px' }}>Add Transaction</h2>
+            <h2 style={{ marginBottom: '24px' }}>{editingTransaction ? 'Edit' : 'Add'} Transaction</h2>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>Amount</label>
@@ -212,7 +240,7 @@ function App() {
                 />
               </div>
               <button type="submit" className="btn btn-primary" disabled={loading}>
-                {loading ? 'Processing...' : 'Add Transaction'}
+                {loading ? 'Processing...' : (editingTransaction ? 'Update' : 'Add') + ' Transaction'}
               </button>
             </form>
           </div>
