@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchTransactions, addTransaction, updateTransaction, deleteTransaction, setApiUrl as saveApiUrl } from './api';
+import { CATEGORIES } from './txnCategories';
 import './index.css';
 
 function App() {
@@ -12,10 +13,37 @@ function App() {
 
   const [formData, setFormData] = useState({
     amount: '',
-    category: 'Food',
+    category: '食',
+    subCategory: '早餐',
     description: '',
     type: 'Expense'
   });
+
+  // Calculate available categories based on type
+  const currentCategories = CATEGORIES[formData.type] || {};
+  const allowSubCategories = currentCategories[formData.category] || [];
+
+  // Reset category when type changes if current category is invalid
+  useEffect(() => {
+    const cats = CATEGORIES[formData.type] || {};
+    if (!cats[formData.category]) {
+      const firstCat = Object.keys(cats)[0];
+      setFormData(prev => ({
+        ...prev,
+        category: firstCat,
+        subCategory: cats[firstCat]?.[0] || ''
+      }));
+    }
+  }, [formData.type]);
+
+  // Reset sub-category when main category changes
+  useEffect(() => {
+    const cats = CATEGORIES[formData.type] || {};
+    const subs = cats[formData.category] || [];
+    if (!subs.includes(formData.subCategory)) {
+      setFormData(prev => ({ ...prev, subCategory: subs[0] || '' }));
+    }
+  }, [formData.category]);
 
   useEffect(() => {
     if (isSetup) {
@@ -66,7 +94,13 @@ function App() {
 
   const openAddModal = () => {
     setEditingTransaction(null);
-    setFormData({ amount: '', category: 'Food', description: '', type: 'Expense' });
+    setFormData({
+      amount: '',
+      category: '食',
+      subCategory: '早餐',
+      description: '',
+      type: 'Expense'
+    });
     setIsModalOpen(true);
   };
 
@@ -91,9 +125,14 @@ function App() {
     let type = transaction.type || 'Expense';
     type = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
 
+    // Map backend response 'sub category' to state
+    const category = transaction.category || '食';
+    const subCategory = transaction['sub category'] || (CATEGORIES[type]?.[category]?.[0] || '');
+
     setFormData({
       amount: transaction.amount,
-      category: transaction.category || 'Food',
+      category: category,
+      subCategory: subCategory,
       description: transaction.description || '',
       type: type
     });
@@ -194,7 +233,9 @@ function App() {
             <div key={i} className="transaction-item" onClick={() => handleEdit(t)}>
               <div className="transaction-info">
                 <span className="transaction-title">{t.description || t.category || 'Untitled'}</span>
-                <span className="transaction-meta">{t.date ? new Date(t.date).toLocaleDateString() : ''} • {t.category || 'Other'}</span>
+                <span className="transaction-meta">
+                  {t.date ? new Date(t.date).toLocaleDateString() : ''} • {t.category} {t['sub category'] ? `- ${t['sub category']}` : ''}
+                </span>
               </div>
               <div className="transaction-right">
                 <div className={`transaction-amount amount-${type}`}>
@@ -262,18 +303,26 @@ function App() {
               </div>
               <div className="form-group">
                 <label>Category</label>
-                <select
-                  value={formData.category}
-                  onChange={e => setFormData({ ...formData, category: e.target.value })}
-                >
-                  <option value="Food">Food</option>
-                  <option value="Transport">Transport</option>
-                  <option value="Shopping">Shopping</option>
-                  <option value="Health">Health</option>
-                  <option value="Entertainment">Entertainment</option>
-                  <option value="Salary">Salary</option>
-                  <option value="Other">Other</option>
-                </select>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <select
+                    value={formData.category}
+                    onChange={e => setFormData({ ...formData, category: e.target.value })}
+                    style={{ flex: 1 }}
+                  >
+                    {Object.keys(currentCategories).map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={formData.subCategory}
+                    onChange={e => setFormData({ ...formData, subCategory: e.target.value })}
+                    style={{ flex: 1 }}
+                  >
+                    {allowSubCategories.map(sub => (
+                      <option key={sub} value={sub}>{sub}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="form-group">
                 <label>Description</label>

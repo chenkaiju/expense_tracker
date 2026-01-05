@@ -43,6 +43,7 @@ export const addTransaction = async (transaction) => {
       },
       body: JSON.stringify({
         ...transaction,
+        'sub category': transaction.subCategory || '', // Map to "Sub Category" column
         date: getTaiwanDate()
       }),
     });
@@ -66,6 +67,7 @@ export const updateTransaction = async (transaction) => {
       },
       body: JSON.stringify({
         ...transaction,
+        'sub category': transaction.subCategory || '', // Map to "Sub Category" column
         row: transaction.row || transaction.id, // Map id to row for backend
         action: 'update'
       }),

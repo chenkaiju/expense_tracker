@@ -16,8 +16,15 @@ function getSheet() {
     if (!sheet) {
         sheet = ss.insertSheet(SHEET_NAME);
         // Add default headers if new sheet
-        sheet.appendRow(['Date', 'Amount', 'Category', 'Description', 'Type']);
+        sheet.appendRow(['Date', 'Amount', 'Category', 'Sub Category', 'Description', 'Type']);
     }
+
+    // Check if "Sub Category" header exists, if not add it
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    if (!headers.includes('Sub Category')) {
+        sheet.getRange(1, headers.length + 1).setValue('Sub Category');
+    }
+
     return sheet;
 }
 
