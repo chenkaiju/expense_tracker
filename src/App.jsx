@@ -70,6 +70,7 @@ function App() {
             else if (lowerKey.includes('description')) newItem.description = item[key];
             else if (lowerKey.includes('type')) newItem.type = item[key];
             else if (lowerKey === 'id' || lowerKey === 'row') newItem.id = item[key];
+            else if (lowerKey === 'sheetname') newItem.sheetName = item[key];
             else newItem[lowerKey] = item[key];
           });
           return newItem;
