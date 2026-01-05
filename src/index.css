@@ -159,7 +159,8 @@ h3 {
   gap: 12px;
 }
 
-.edit-btn {
+.edit-btn,
+.delete-btn {
   background: transparent;
   border: none;
   padding: 8px;
@@ -176,6 +177,11 @@ h3 {
 .edit-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: var(--primary);
+}
+
+.delete-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--danger);
 }
 
 .transaction-item {

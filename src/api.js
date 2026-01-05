@@ -76,3 +76,26 @@ export const updateTransaction = async (transaction) => {
     throw error;
   }
 };
+
+export const deleteTransaction = async (rowId) => {
+  const url = getApiUrl();
+  if (!url) throw new Error('API URL not set');
+
+  try {
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        row: rowId,
+        action: 'delete'
+      }),
+    });
+    return { status: 'success' };
+  } catch (error) {
+    console.error('Delete error:', error);
+    throw error;
+  }
+};

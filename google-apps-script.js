@@ -85,6 +85,14 @@ function doPost(e) {
                 .setMimeType(ContentService.MimeType.JSON);
         }
 
+        // ACTION: DELETE
+        if (params.action === 'delete' && params.row) {
+            const rowIndex = parseInt(params.row);
+            sheet.deleteRow(rowIndex);
+            return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Row deleted' }))
+                .setMimeType(ContentService.MimeType.JSON);
+        }
+
         // ACTION: ADD (Default)
         const newRow = headers.map(header => {
             const key = header.toLowerCase();
