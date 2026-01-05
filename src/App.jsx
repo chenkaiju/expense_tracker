@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { fetchTransactions, addTransaction, updateTransaction, deleteTransaction, setApiUrl as saveApiUrl } from './api';
 import { CATEGORIES } from './txnCategories';
+import Statistics from './Statistics';
 import './index.css';
 
 function App() {
+  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'statistics'
   const [transactions, setTransactions] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
@@ -197,83 +199,114 @@ function App() {
   }
 
   return (
-    <div className="app-container">
-      <div className="glass-card balance-card">
-        <div className="balance-label">Total Balance</div>
-        <div className="balance-amount">${balance.toLocaleString()}</div>
-      </div>
+    <div className="app-container" style={{ paddingBottom: '90px' }}>
+      {currentView === 'dashboard' ? (
+        <>
+          <div className="glass-card balance-card">
+            <div className="balance-label">Total Balance</div>
+            <div className="balance-amount">${balance.toLocaleString()}</div>
+          </div>
 
-      <div className="stats-grid">
-        <div className="glass-card stat-item income">
-          <div className="stat-label">Income</div>
-          <div className="stat-value">+${totalIncome.toLocaleString()}</div>
-        </div>
-        <div className="glass-card stat-item expense">
-          <div className="stat-label">Expense</div>
-          <div className="stat-value">-${totalExpense.toLocaleString()}</div>
-        </div>
-      </div>
-
-      <div className="section-header" style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3>Recent Activity</h3>
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-          {transactions.length} items found
-        </div>
-        <button onClick={loadData} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}>
-          {loading ? '...' : 'Refresh'}
-        </button>
-      </div>
-
-      <div className="transaction-list">
-        {transactions.map((t, i) => {
-          if (!t) return null;
-          const type = (t.type || 'expense').toLowerCase();
-          const amount = parseFloat(t.amount || 0);
-          return (
-            <div key={i} className="transaction-item" onClick={() => handleEdit(t)}>
-              <div className="transaction-info">
-                <span className="transaction-title">{t.description || t.category || 'Untitled'}</span>
-                <span className="transaction-meta">
-                  {t.date ? new Date(t.date).toLocaleDateString() : ''} • {t.category} {t['sub category'] ? `- ${t['sub category']}` : ''}
-                </span>
-              </div>
-              <div className="transaction-right">
-                <div className={`transaction-amount amount-${type}`}>
-                  {type === 'income' ? '+' : '-'}${amount.toLocaleString()}
-                </div>
-                <button
-                  className="edit-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEdit(t);
-                  }}
-                  aria-label="Edit"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                </button>
-                <button
-                  className="delete-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(t);
-                  }}
-                  aria-label="Delete"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                  </svg>
-                </button>
-              </div>
+          <div className="stats-grid">
+            <div className="glass-card stat-item income">
+              <div className="stat-label">Income</div>
+              <div className="stat-value">+${totalIncome.toLocaleString()}</div>
             </div>
-          );
-        })}
-      </div>
+            <div className="glass-card stat-item expense">
+              <div className="stat-label">Expense</div>
+              <div className="stat-value">-${totalExpense.toLocaleString()}</div>
+            </div>
+          </div>
 
-      <button className="fab" onClick={openAddModal}>+</button>
+          <div className="section-header" style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3>Recent Activity</h3>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              {transactions.length} items found
+            </div>
+            <button onClick={loadData} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}>
+              {loading ? '...' : 'Refresh'}
+            </button>
+          </div>
+
+          <div className="transaction-list">
+            {transactions.map((t, i) => {
+              if (!t) return null;
+              const type = (t.type || 'expense').toLowerCase();
+              const amount = parseFloat(t.amount || 0);
+              return (
+                <div key={i} className="transaction-item" onClick={() => handleEdit(t)}>
+                  <div className="transaction-info">
+                    <span className="transaction-title">{t.description || t.category || 'Untitled'}</span>
+                    <span className="transaction-meta">
+                      {t.date ? new Date(t.date).toLocaleDateString() : ''} • {t.category} {t['sub category'] ? `- ${t['sub category']}` : ''}
+                    </span>
+                  </div>
+                  <div className="transaction-right">
+                    <div className={`transaction-amount amount-${type}`}>
+                      {type === 'income' ? '+' : '-'}${amount.toLocaleString()}
+                    </div>
+                    <button
+                      className="edit-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(t);
+                      }}
+                      aria-label="Edit"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
+                    </button>
+                    <button
+                      className="delete-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(t);
+                      }}
+                      aria-label="Delete"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <button className="fab" onClick={openAddModal}>+</button>
+        </>
+      ) : (
+        <Statistics transactions={transactions} />
+      )}
+
+      {/* Bottom Navigation */}
+      <nav className="bottom-nav">
+        <button
+          className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setCurrentView('dashboard')}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>Home</span>
+        </button>
+        <button
+          className={`nav-item ${currentView === 'statistics' ? 'active' : ''}`}
+          onClick={() => setCurrentView('statistics')}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>Stats</span>
+        </button>
+      </nav>
 
       {isModalOpen && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
