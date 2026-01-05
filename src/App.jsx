@@ -72,11 +72,15 @@ function App() {
 
   const handleEdit = (transaction) => {
     setEditingTransaction(transaction);
+    // Ensure type matches the select options (Title Case)
+    let type = transaction.type || 'Expense';
+    type = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
+
     setFormData({
       amount: transaction.amount,
       category: transaction.category || 'Food',
       description: transaction.description || '',
-      type: transaction.type || 'Expense'
+      type: type
     });
     setIsModalOpen(true);
   };

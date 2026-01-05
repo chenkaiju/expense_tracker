@@ -62,6 +62,7 @@ export const updateTransaction = async (transaction) => {
       },
       body: JSON.stringify({
         ...transaction,
+        row: transaction.row || transaction.id, // Map id to row for backend
         action: 'update'
       }),
     });
