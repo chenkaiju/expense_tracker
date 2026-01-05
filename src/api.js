@@ -26,6 +26,10 @@ export const fetchTransactions = async () => {
   }
 };
 
+const getTaiwanDate = () => {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
+};
+
 export const addTransaction = async (transaction) => {
   const url = getApiUrl();
   if (!url) throw new Error('API URL not set');
@@ -39,7 +43,7 @@ export const addTransaction = async (transaction) => {
       },
       body: JSON.stringify({
         ...transaction,
-        date: new Date().toISOString().split('T')[0]
+        date: getTaiwanDate()
       }),
     });
     // With no-cors, we can't read the response body, but we can assume success if no error
