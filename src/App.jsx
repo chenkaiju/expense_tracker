@@ -65,6 +65,7 @@ function App() {
             const lowerKey = key.toLowerCase();
             if (lowerKey.includes('date')) newItem.date = item[key];
             else if (lowerKey.includes('amount')) newItem.amount = item[key];
+            else if (lowerKey.includes('sub') && lowerKey.includes('category')) newItem['sub category'] = item[key];
             else if (lowerKey.includes('category')) newItem.category = item[key];
             else if (lowerKey.includes('description')) newItem.description = item[key];
             else if (lowerKey.includes('type')) newItem.type = item[key];
