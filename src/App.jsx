@@ -295,6 +295,13 @@ function App() {
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
               {transactions.length} items found
             </div>
+            <button onClick={() => {
+              localStorage.removeItem('EXPENSE_TRACKER_TOKEN');
+              setIsLoggedIn(false);
+              setInputToken('');
+            }} style={{ background: 'none', border: '1px solid var(--text-secondary)', padding: '4px 8px', borderRadius: '4px', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.75rem', marginRight: '8px' }}>
+              Lock
+            </button>
             <button onClick={loadData} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}>
               {loading ? '...' : 'Refresh'}
             </button>
