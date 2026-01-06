@@ -35,6 +35,74 @@ body {
   /* Space for fab */
 }
 
+/* Setup/Login Screen */
+.setup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-dark);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.setup-card {
+  background: var(--card-bg);
+  padding: 2rem;
+  border-radius: 1rem;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.setup-card h2 {
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.setup-card p {
+  margin-bottom: 2rem;
+  color: var(--text-secondary);
+}
+
+.url-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+  color: white;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.url-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.save-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.save-btn:hover {
+  background: var(--primary-dark);
+}
+
 h1,
 h2,
 h3 {

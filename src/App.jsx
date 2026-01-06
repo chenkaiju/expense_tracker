@@ -1,5 +1,6 @@
+```javascript
 import { useState, useEffect } from 'react';
-import { fetchTransactions, addTransaction, updateTransaction, deleteTransaction, setApiUrl as saveApiUrl } from './api';
+import { fetchTransactions, addTransaction, updateTransaction, deleteTransaction, setApiUrl as saveApiUrl, setAuthToken } from './api';
 import { CATEGORIES } from './txnCategories';
 import Statistics from './Statistics';
 import './index.css';
@@ -10,8 +11,10 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_URL || localStorage.getItem('EXPENSE_TRACKER_API_URL') || '');
-  const [isSetup, setIsSetup] = useState(!!(import.meta.env.VITE_API_URL || localStorage.getItem('EXPENSE_TRACKER_API_URL')));
+  const [isSetup, setIsSetup] = useState(false); // Changed default to false to wait for checks
   const [loading, setLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('EXPENSE_TRACKER_TOKEN'));
+  const [inputToken, setInputToken] = useState('');
 
   const [formData, setFormData] = useState({
     amount: '',
@@ -48,12 +51,30 @@ function App() {
   }, [formData.category]);
 
   useEffect(() => {
-    if (isSetup) {
+    // Check local storage for setup
+    const storedApiUrl = import.meta.env.VITE_API_URL || localStorage.getItem('EXPENSE_TRACKER_API_URL');
+    if (storedApiUrl) {
+        saveApiUrl(storedApiUrl); // Set the API URL in the api.js module
+        setApiUrl(storedApiUrl);
+        setIsSetup(true);
+    }
+    
+    // Check for token on mount
+    const storedToken = localStorage.getItem('EXPENSE_TRACKER_TOKEN');
+    if (storedToken) {
+      setAuthToken(storedToken);
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isSetup && isLoggedIn) {
       loadData();
     }
-  }, [isSetup]);
+  }, [isSetup, isLoggedIn]);
 
   const loadData = async () => {
+    if (!apiUrl) return;
     setLoading(true);
     try {
       const data = await fetchTransactions();
@@ -82,8 +103,20 @@ function App() {
       }
     } catch (err) {
       console.error('Failed to load data:', err);
+      if (err.message === 'Unauthorized') {
+         setIsLoggedIn(false);
+         alert('Session expired or invalid token. Please login again.');
+      }
     }
     setLoading(false);
+  };
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (inputToken) {
+      setAuthToken(inputToken);
+      setIsLoggedIn(true);
+    }
   };
 
   const handleSetup = (e) => {
@@ -179,6 +212,43 @@ function App() {
 
   const balance = totalIncome - totalExpense;
 
+  if (!isLoggedIn) {
+    return (
+      <div className="setup-overlay">
+        <div className="setup-card">
+           <h2>🔒 Locked</h2>
+           <p style={{marginBottom: '20px', color: '#888'}}>Please enter your passcode to access the expense tracker.</p>
+           <form onSubmit={handleLogin}>
+             <div className="form-group">
+               <input 
+                 type="password" 
+                 placeholder="Enter Passcode (API Key)" 
+                 value={inputToken}
+                 onChange={(e) => setInputToken(e.target.value)}
+                 required
+               />
+             </div>
+             <button type="submit" className="btn btn-primary" style={{width: '100%'}}>Unlock</button>
+           </form>
+           
+           {!isSetup && (
+               <div style={{marginTop: '20px', borderTop: '1px solid #333', paddingTop: '20px'}}>
+                   <p style={{fontSize: '0.8rem'}}>First time? Enter API URL below too.</p>
+                   <input 
+                    type="text" 
+                    placeholder="Enter Google Apps Script Web App URL" 
+                    value={apiUrl}
+                    onChange={(e) => setApiUrl(e.target.value)}
+                    style={{marginBottom: '10px', width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #444', background: '#222', color: '#fff'}}
+                   />
+                   <button type="button" onClick={() => { saveApiUrl(apiUrl); setIsSetup(true); }} className="btn btn-primary" style={{width: '100%', background: '#444'}}>Save URL</button>
+               </div>
+           )}
+        </div>
+      </div>
+    );
+  }
+
   if (!isSetup) {
     return (
       <div className="setup-overlay">
@@ -240,11 +310,11 @@ function App() {
                   <div className="transaction-info">
                     <span className="transaction-title">{t.description || t.category || 'Untitled'}</span>
                     <span className="transaction-meta">
-                      {t.date ? new Date(t.date).toLocaleDateString() : ''} • {t.category} {t['sub category'] ? `- ${t['sub category']}` : ''}
+                      {t.date ? new Date(t.date).toLocaleDateString() : ''} • {t.category} {t['sub category'] ? `- ${ t['sub category'] } ` : ''}
                     </span>
                   </div>
                   <div className="transaction-right">
-                    <div className={`transaction-amount amount-${type}`}>
+                    <div className={`transaction - amount amount - ${ type } `}>
                       {type === 'income' ? '+' : '-'}${amount.toLocaleString()}
                     </div>
                     <button
@@ -288,7 +358,7 @@ function App() {
       {/* Bottom Navigation */}
       <nav className="bottom-nav">
         <button
-          className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`}
+          className={`nav - item ${ currentView === 'dashboard' ? 'active' : '' } `}
           onClick={() => setCurrentView('dashboard')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -298,7 +368,7 @@ function App() {
           <span>Home</span>
         </button>
         <button
-          className={`nav-item ${currentView === 'statistics' ? 'active' : ''}`}
+          className={`nav - item ${ currentView === 'statistics' ? 'active' : '' } `}
           onClick={() => setCurrentView('statistics')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

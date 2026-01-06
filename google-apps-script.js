@@ -4,6 +4,9 @@
  * Paste this code into your Google Apps Script editor.
  */
 
+// SECURITY: Change this to your desired passcode!
+const API_KEY = '123456';
+
 const LEGACY_SHEET_NAME = 'Transactions';
 
 function getSheetByName(name) {
@@ -37,6 +40,12 @@ function getTargetSheetForDate(dateString) {
 }
 
 function doGet(e) {
+    // Auth Check
+    if (!e.parameter.token || e.parameter.token !== API_KEY) {
+        return ContentService.createTextOutput(JSON.stringify({ error: 'Unauthorized: Invalid or missing token' }))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
+
     try {
         const ss = SpreadsheetApp.getActiveSpreadsheet();
         const sheets = ss.getSheets();
@@ -84,6 +93,12 @@ function doPost(e) {
             params = JSON.parse(e.postData.contents);
         } catch (err) {
             params = e.parameter;
+        }
+
+        // Auth Check
+        if (!params.token || params.token !== API_KEY) {
+            return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Unauthorized: Invalid or missing token' }))
+                .setMimeType(ContentService.MimeType.JSON);
         }
 
         // ACTION: UPDATE

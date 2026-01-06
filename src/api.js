@@ -10,18 +10,38 @@ export const setApiUrl = (url) => {
   localStorage.setItem('EXPENSE_TRACKER_API_URL', url);
 };
 
+const getAuthToken = () => {
+  return localStorage.getItem('EXPENSE_TRACKER_TOKEN') || '';
+};
+
+export const setAuthToken = (token) => {
+  localStorage.setItem('EXPENSE_TRACKER_TOKEN', token);
+};
+
 export const fetchTransactions = async () => {
   const url = getApiUrl();
   if (!url) return [];
 
   try {
-    // 加上 ?t=時間戳記，防止瀏覽器讀取舊的緩存
-    const cacheBuster = url.includes('?') ? `&t=${Date.now()}` : `?t=${Date.now()}`;
-    const response = await fetch(url + cacheBuster);
+    const token = getAuthToken();
+    // Allow token in query param
+    const cacheBuster = `?t=${Date.now()}&token=${encodeURIComponent(token)}`;
+    const fullUrl = url.includes('?') ? url + cacheBuster.replace('?', '&') : url + cacheBuster;
+
+    const response = await fetch(fullUrl);
+
+    // Handle auth error (Apps Script might return 200 with error JSON, or actual 401/403 if simple-auth implemented at script level differently)
+    // But our script returns 200 with JSON error for now.
     if (!response.ok) throw new Error('Network response was not ok');
-    return await response.json();
+
+    const data = await response.json();
+    if (data.error && data.error.includes('Unauthorized')) {
+      throw new Error('Unauthorized');
+    }
+    return data;
   } catch (error) {
     console.error('Fetch error:', error);
+    if (error.message === 'Unauthorized') throw error;
     return [];
   }
 };
@@ -47,23 +67,24 @@ export const addTransaction = async (transaction) => {
   try {
     const response = await fetch(url, {
       method: 'POST',
-      mode: 'no-cors', // Google Apps Script requires no-cors or specialized handling for POST
+      mode: 'no-cors',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         ...transaction,
-        'sub category': transaction.subCategory || '', // Map to "Sub Category" column
-        date: formatDateToTaiwan(new Date())
+        'sub category': transaction.subCategory || '',
+        date: formatDateToTaiwan(new Date()),
+        token: getAuthToken() // Add Token
       }),
     });
-    // With no-cors, we can't read the response body, but we can assume success if no error
     return { status: 'success' };
   } catch (error) {
     console.error('Post error:', error);
     throw error;
   }
 };
+
 export const updateTransaction = async (transaction) => {
   const url = getApiUrl();
   if (!url) throw new Error('API URL not set');
@@ -79,9 +100,10 @@ export const updateTransaction = async (transaction) => {
         ...transaction,
         'sub category': transaction.subCategory || '',
         row: transaction.row || transaction.id,
-        sheetName: transaction.sheetName, // Pass sheetName for targeting
-        date: formatDateToTaiwan(transaction.date), // Ensure date is formatted to YYYY-MM-DD (Taiwan)
-        action: 'update'
+        sheetName: transaction.sheetName,
+        date: formatDateToTaiwan(transaction.date),
+        action: 'update',
+        token: getAuthToken() // Add Token
       }),
     });
     return { status: 'success' };
@@ -104,8 +126,9 @@ export const deleteTransaction = async (rowId, sheetName) => {
       },
       body: JSON.stringify({
         row: rowId,
-        sheetName: sheetName, // Pass sheetName for targeting
-        action: 'delete'
+        sheetName: sheetName,
+        action: 'delete',
+        token: getAuthToken() // Add Token
       }),
     });
     return { status: 'success' };
