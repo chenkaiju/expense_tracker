@@ -299,34 +299,26 @@ function App() {
   return (
     <div className="app-container" style={{ paddingBottom: '90px' }}>
       {/* Month Selector in Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h2 style={{ margin: 0 }}>Dashboard</h2>
-        <select
-          value={currentMonth}
-          onChange={(e) => {
-            const newMonth = e.target.value;
-            setCurrentMonth(newMonth);
-            loadData(newMonth);
-          }}
-          className="month-selector"
-          style={{
-            padding: '8px 12px',
-            borderRadius: '12px',
-            border: 'none',
-            background: 'rgba(255, 255, 255, 0.1)',
-            color: 'white',
-            backdropFilter: 'blur(10px)',
-            fontSize: '0.9rem',
-            fontWeight: '600'
-          }}
-        >
-          {availableMonths.map(month => (
-            <option key={month} value={month}>{month}</option>
-          ))}
-          {!availableMonths.includes(currentMonth) && currentMonth && (
-            <option value={currentMonth}>{currentMonth}</option>
-          )}
-        </select>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '16px' }}>
+        <div className="month-selector-container">
+          <select
+            value={currentMonth}
+            onChange={(e) => {
+              const newMonth = e.target.value;
+              setCurrentMonth(newMonth);
+              loadData(newMonth);
+            }}
+            className="month-selector"
+          >
+            {availableMonths.map(month => (
+              <option key={month} value={month}>{month}</option>
+            ))}
+            {!availableMonths.includes(currentMonth) && currentMonth && (
+              <option value={currentMonth}>{currentMonth}</option>
+            )}
+          </select>
+          <div className="month-selector-arrow">▼</div>
+        </div>
       </div>
 
       {currentView === 'dashboard' ? (

@@ -125,7 +125,7 @@ h3 {
   background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
   color: white;
   text-align: center;
-  padding: 40px 24px;
+  padding: 20px 24px;
 }
 
 .balance-label {
@@ -447,4 +447,47 @@ input:focus {
 /* Adjust FAB position to not overlap with nav */
 .fab {
   bottom: 90px;
+}
+
+/* Custom Month Selector */
+.month-selector-container {
+  position: relative;
+  display: inline-block;
+}
+
+.month-selector {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: rgba(99, 102, 241, 0.15) !important;
+  color: var(--primary) !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+  padding: 8px 32px 8px 16px !important;
+  border-radius: 20px !important;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.month-selector:hover {
+  background-color: rgba(99, 102, 241, 0.25) !important;
+  border-color: var(--primary) !important;
+}
+
+.month-selector:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+
+.month-selector-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--primary);
+  font-size: 0.8rem;
 }
