@@ -18,15 +18,19 @@ export const setAuthToken = (token) => {
   localStorage.setItem('EXPENSE_TRACKER_TOKEN', token);
 };
 
-export const fetchTransactions = async () => {
+export const fetchTransactions = async (month = '') => {
   const url = getApiUrl();
   if (!url) return [];
 
   try {
     const token = getAuthToken();
     // Allow token in query param
-    const cacheBuster = `?t=${Date.now()}&token=${encodeURIComponent(token)}`;
-    const fullUrl = url.includes('?') ? url + cacheBuster.replace('?', '&') : url + cacheBuster;
+    let queryParams = `?t=${Date.now()}&token=${encodeURIComponent(token)}`;
+    if (month) {
+      queryParams += `&month=${encodeURIComponent(month)}`;
+    }
+
+    const fullUrl = url.includes('?') ? url + queryParams.replace('?', '&') : url + queryParams;
 
     const response = await fetch(fullUrl);
 
@@ -42,6 +46,28 @@ export const fetchTransactions = async () => {
   } catch (error) {
     console.error('Fetch error:', error);
     if (error.message === 'Unauthorized') throw error;
+    return [];
+  }
+};
+
+export const fetchAvailableMonths = async () => {
+  const url = getApiUrl();
+  if (!url) return [];
+
+  try {
+    const token = getAuthToken();
+    const queryParams = `?action=get_months&t=${Date.now()}&token=${encodeURIComponent(token)}`;
+    const fullUrl = url.includes('?') ? url + queryParams.replace('?', '&') : url + queryParams;
+
+    const response = await fetch(fullUrl);
+    if (!response.ok) throw new Error('Network response was not ok');
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Fetch months error:', error);
     return [];
   }
 };

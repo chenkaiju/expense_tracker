@@ -48,32 +48,52 @@ function doGet(e) {
 
     try {
         const ss = SpreadsheetApp.getActiveSpreadsheet();
-        const sheets = ss.getSheets();
-        let allData = [];
 
-        sheets.forEach(sheet => {
-            const name = sheet.getName();
-            // Match YYYY/MM pattern or legacy 'Transactions'
-            if (/^\d{4}\/\d{2}$/.test(name) || name === LEGACY_SHEET_NAME) {
-                const data = sheet.getDataRange().getValues();
-                if (data.length > 1) {
-                    const headers = data[0];
-                    const rows = data.slice(1);
-
-                    const sheetRows = rows.map((row, index) => {
-                        let obj = {
-                            row: index + 2,
-                            sheetName: name // Important: tell frontend where this row lives
-                        };
-                        headers.forEach((header, i) => {
-                            obj[header.toLowerCase()] = row[i];
-                        });
-                        return obj;
-                    });
-                    allData = allData.concat(sheetRows);
+        // 1. ACTION: GET AVAILABLE MONTHS
+        if (e.parameter.action === 'get_months') {
+            const sheets = ss.getSheets();
+            const months = [];
+            sheets.forEach(sheet => {
+                const name = sheet.getName();
+                // Match YYYY/MM pattern
+                if (/^\d{4}\/\d{2}$/.test(name)) {
+                    // Convert YYYY/MM to YYYY-MM for frontend
+                    months.push(name.replace('/', '-'));
                 }
+            });
+            // Sort descending (latest first)
+            months.sort().reverse();
+            return ContentService.createTextOutput(JSON.stringify(months))
+                .setMimeType(ContentService.MimeType.JSON);
+        }
+
+        // 2. FETCH TRANSACTIONS (Optional: filtered by month)
+        let allData = [];
+        const requestedMonth = e.parameter.month; // Expected format: YYYY-MM
+
+        if (requestedMonth) {
+            // Case A: specific month requested
+            const sheetName = requestedMonth.replace('-', '/');
+            const sheet = ss.getSheetByName(sheetName);
+            if (sheet) {
+                const data = sheet.getDataRange().getValues();
+                allData = parseSheetData(sheet, data);
             }
-        });
+        } else {
+            // Case B: all data (Legacy behavior, or if no month specified)
+            // Limit to last 3 months to avoid timeout if too large? 
+            // For now, keep original behavior: scan all YYYY/MM sheets + Legacy
+            const sheets = ss.getSheets();
+            sheets.forEach(sheet => {
+                const name = sheet.getName();
+                if (/^\d{4}\/\d{2}$/.test(name) || name === LEGACY_SHEET_NAME) {
+                    const data = sheet.getDataRange().getValues();
+                    if (data.length > 1) {
+                        allData = allData.concat(parseSheetData(sheet, data));
+                    }
+                }
+            });
+        }
 
         return ContentService.createTextOutput(JSON.stringify(allData))
             .setMimeType(ContentService.MimeType.JSON);
@@ -81,6 +101,24 @@ function doGet(e) {
         return ContentService.createTextOutput(JSON.stringify({ error: err.toString() }))
             .setMimeType(ContentService.MimeType.JSON);
     }
+}
+
+function parseSheetData(sheet, data) {
+    if (data.length <= 1) return [];
+    const headers = data[0];
+    const rows = data.slice(1);
+    const sheetName = sheet.getName();
+
+    return rows.map((row, index) => {
+        let obj = {
+            row: index + 2,
+            sheetName: sheetName
+        };
+        headers.forEach((header, i) => {
+            obj[header.toLowerCase()] = row[i];
+        });
+        return obj;
+    });
 }
 
 function doPost(e) {

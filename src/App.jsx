@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchTransactions, addTransaction, updateTransaction, deleteTransaction, setApiUrl as saveApiUrl, setAuthToken } from './api';
+import { fetchTransactions, addTransaction, updateTransaction, deleteTransaction, setApiUrl as saveApiUrl, setAuthToken, fetchAvailableMonths } from './api';
 import { CATEGORIES } from './txnCategories';
 import Statistics from './Statistics';
 import './index.css';
@@ -7,6 +7,8 @@ import './index.css';
 function App() {
   const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'statistics'
   const [transactions, setTransactions] = useState([]);
+  const [availableMonths, setAvailableMonths] = useState([]);
+  const [currentMonth, setCurrentMonth] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_URL || localStorage.getItem('EXPENSE_TRACKER_API_URL') || '');
@@ -68,15 +70,40 @@ function App() {
 
   useEffect(() => {
     if (isSetup && isLoggedIn) {
-      loadData();
+      initData();
     }
   }, [isSetup, isLoggedIn]);
 
-  const loadData = async () => {
+  const initData = async () => {
     if (!apiUrl) return;
     setLoading(true);
     try {
-      const data = await fetchTransactions();
+      // 1. Fetch available months first
+      const months = await fetchAvailableMonths();
+      setAvailableMonths(months);
+
+      // 2. Determine initial month (latest or current)
+      let initialMonth = '';
+      if (months.length > 0) {
+        initialMonth = months[0];
+      } else {
+        initialMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+      }
+      setCurrentMonth(initialMonth);
+
+      // 3. Load data for that month
+      await loadData(initialMonth);
+    } catch (err) {
+      console.error('Failed to init data:', err);
+    }
+    setLoading(false);
+  };
+
+  const loadData = async (monthToLoad) => {
+    if (!apiUrl || !monthToLoad) return;
+    setLoading(true);
+    try {
+      const data = await fetchTransactions(monthToLoad);
       if (Array.isArray(data)) {
         // Normalize keys and map standard names
         const normalizedData = data.map((item, index) => {
@@ -147,7 +174,7 @@ function App() {
         const rowId = transaction.row || transaction.id;
         await deleteTransaction(rowId, transaction.sheetName);
         // Reload after deletion
-        setTimeout(loadData, 2000);
+        setTimeout(() => loadData(currentMonth), 2000);
       } catch (error) {
         alert('Error deleting transaction');
       }
@@ -194,7 +221,7 @@ function App() {
       setIsModalOpen(false);
       setFormData({ amount: '', category: 'Food', description: '', type: 'Expense' });
       // Reload after addition/update
-      setTimeout(loadData, 2000);
+      setTimeout(() => loadData(currentMonth), 2000);
     } catch (error) {
       alert('Error saving transaction');
     }
@@ -271,6 +298,37 @@ function App() {
 
   return (
     <div className="app-container" style={{ paddingBottom: '90px' }}>
+      {/* Month Selector in Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <h2 style={{ margin: 0 }}>Dashboard</h2>
+        <select
+          value={currentMonth}
+          onChange={(e) => {
+            const newMonth = e.target.value;
+            setCurrentMonth(newMonth);
+            loadData(newMonth);
+          }}
+          className="month-selector"
+          style={{
+            padding: '8px 12px',
+            borderRadius: '12px',
+            border: 'none',
+            background: 'rgba(255, 255, 255, 0.1)',
+            color: 'white',
+            backdropFilter: 'blur(10px)',
+            fontSize: '0.9rem',
+            fontWeight: '600'
+          }}
+        >
+          {availableMonths.map(month => (
+            <option key={month} value={month}>{month}</option>
+          ))}
+          {!availableMonths.includes(currentMonth) && currentMonth && (
+            <option value={currentMonth}>{currentMonth}</option>
+          )}
+        </select>
+      </div>
+
       {currentView === 'dashboard' ? (
         <>
           <div className="glass-card balance-card">
@@ -302,7 +360,7 @@ function App() {
               }} style={{ background: 'none', border: '1px solid var(--text-secondary)', padding: '4px 8px', borderRadius: '4px', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.75rem' }}>
                 Lock
               </button>
-              <button onClick={loadData} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}>
+              <button onClick={() => loadData(currentMonth)} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}>
                 {loading ? '...' : 'Refresh'}
               </button>
             </div>

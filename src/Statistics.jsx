@@ -4,14 +4,13 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
 
 const Statistics = ({ transactions }) => {
-    const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
     const [selectedCategory, setSelectedCategory] = useState(null);
 
     const statsData = useMemo(() => {
-        // 1. Filter by month and Expense type
+        // 1. Filter by Expense type (Date filtering is now done server-side/globally)
         let filtered = transactions.filter(t => {
-            if (!t.date || !t.type || t.type.toLowerCase() !== 'expense') return false;
-            return t.date.startsWith(currentMonth);
+            if (!t.type || t.type.toLowerCase() !== 'expense') return false;
+            return true;
         });
 
         // 2. If category selected, filter by that category
@@ -43,15 +42,7 @@ const Statistics = ({ transactions }) => {
         const total = data.reduce((sum, item) => sum + item.value, 0);
 
         return { data, total };
-    }, [transactions, currentMonth, selectedCategory]);
-
-    const availableMonths = useMemo(() => {
-        const months = new Set();
-        transactions.forEach(t => {
-            if (t.date) months.add(t.date.slice(0, 7));
-        });
-        return Array.from(months).sort().reverse();
-    }, [transactions]);
+    }, [transactions, selectedCategory]);
 
     const handleSliceClick = (entry) => {
         if (!selectedCategory) {
@@ -60,7 +51,7 @@ const Statistics = ({ transactions }) => {
     };
 
     return (
-        <div className="statistics-container" style={{ padding: '20px', animation: 'fadeIn 0.3s ease' }}>
+        <div className="statistics-container" style={{ padding: '0 0 20px 0', animation: 'fadeIn 0.3s ease' }}>
             <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {selectedCategory && (
@@ -81,31 +72,8 @@ const Statistics = ({ transactions }) => {
                             </svg>
                         </button>
                     )}
-                    <h2 style={{ margin: 0 }}>{selectedCategory || 'Statistics'}</h2>
+                    <h2 style={{ margin: 0, fontSize: '1.2rem' }}>{selectedCategory || 'Expense Breakdown'}</h2>
                 </div>
-
-                <select
-                    value={currentMonth}
-                    onChange={(e) => {
-                        setCurrentMonth(e.target.value);
-                        setSelectedCategory(null); // Reset drill-down on month change
-                    }}
-                    style={{
-                        padding: '5px 10px',
-                        borderRadius: '10px',
-                        border: 'none',
-                        background: 'rgba(255,255,255,0.1)',
-                        color: 'white',
-                        backdropFilter: 'blur(10px)'
-                    }}
-                >
-                    {availableMonths.map(m => (
-                        <option key={m} value={m}>{m}</option>
-                    ))}
-                    {!availableMonths.includes(currentMonth) && (
-                        <option value={currentMonth}>{currentMonth}</option>
-                    )}
-                </select>
             </div>
 
             <div className="total-expense" style={{ textAlign: 'center', marginBottom: '20px' }}>
