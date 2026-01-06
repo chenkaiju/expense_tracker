@@ -9,6 +9,7 @@ function App() {
   const [transactions, setTransactions] = useState([]);
   const [availableMonths, setAvailableMonths] = useState([]);
   const [currentMonth, setCurrentMonth] = useState('');
+  const [dataCache, setDataCache] = useState({}); // Cache for monthly data: { 'YYYY-MM': [...] }
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_URL || localStorage.getItem('EXPENSE_TRACKER_API_URL') || '');
@@ -99,8 +100,15 @@ function App() {
     setLoading(false);
   };
 
-  const loadData = async (monthToLoad) => {
+  const loadData = async (monthToLoad, forceRefresh = false) => {
     if (!apiUrl || !monthToLoad) return;
+
+    // Check cache first (if not forcing refresh)
+    if (!forceRefresh && dataCache[monthToLoad]) {
+      setTransactions(dataCache[monthToLoad]);
+      return;
+    }
+
     setLoading(true);
     try {
       const data = await fetchTransactions(monthToLoad);
@@ -122,7 +130,16 @@ function App() {
           });
           return newItem;
         });
-        setTransactions(normalizedData.reverse());
+
+        const reversedData = normalizedData.reverse();
+        setTransactions(reversedData);
+
+        // Update cache
+        setDataCache(prev => ({
+          ...prev,
+          [monthToLoad]: reversedData
+        }));
+
       } else {
         console.error('Data received is not an array:', data);
         setTransactions([]);
@@ -173,8 +190,8 @@ function App() {
       try {
         const rowId = transaction.row || transaction.id;
         await deleteTransaction(rowId, transaction.sheetName);
-        // Reload after deletion
-        setTimeout(() => loadData(currentMonth), 2000);
+        // Force reload after deletion
+        setTimeout(() => loadData(currentMonth, true), 2000);
       } catch (error) {
         alert('Error deleting transaction');
       }
@@ -220,8 +237,8 @@ function App() {
       }
       setIsModalOpen(false);
       setFormData({ amount: '', category: 'Food', description: '', type: 'Expense' });
-      // Reload after addition/update
-      setTimeout(() => loadData(currentMonth), 2000);
+      // Force reload after addition/update
+      setTimeout(() => loadData(currentMonth, true), 2000);
     } catch (error) {
       alert('Error saving transaction');
     }
@@ -352,7 +369,7 @@ function App() {
               }} style={{ background: 'none', border: '1px solid var(--text-secondary)', padding: '4px 8px', borderRadius: '4px', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.75rem' }}>
                 Lock
               </button>
-              <button onClick={() => loadData(currentMonth)} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}>
+              <button onClick={() => loadData(currentMonth, true)} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}>
                 {loading ? '...' : 'Refresh'}
               </button>
             </div>
