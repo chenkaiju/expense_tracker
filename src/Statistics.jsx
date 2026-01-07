@@ -99,6 +99,8 @@ const Statistics = ({ transactions }) => {
                                     paddingAngle={5}
                                     dataKey="value"
                                     onClick={handleSliceClick}
+                                    label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                                    labelLine={false}
                                     style={{ cursor: !selectedCategory ? 'pointer' : 'default' }}
                                 >
                                     {statsData.data.map((entry, index) => (
@@ -111,7 +113,14 @@ const Statistics = ({ transactions }) => {
                                 </Pie>
                                 <Tooltip
                                     formatter={(value) => `$${value.toLocaleString()}`}
-                                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '8px' }}
+                                    contentStyle={{
+                                        backgroundColor: 'rgba(30, 30, 30, 0.9)',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        borderRadius: '8px',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                                    }}
+                                    itemStyle={{ color: '#fff', fontSize: '14px' }}
+                                    labelStyle={{ color: '#aaa', marginBottom: '4px' }}
                                 />
                             </PieChart>
                         </ResponsiveContainer>
