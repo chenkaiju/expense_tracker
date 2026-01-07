@@ -93,7 +93,9 @@ function doGet(e) {
         const targetSheet = ss.getSheetByName(targetSheetName);
 
         if (targetSheet) {
-            const data = targetSheet.getDataRange().getValues();
+            const range = targetSheet.getDataRange();
+            const data = range.getValues();
+            const displayData = range.getDisplayValues();
             const headers = data[0].map(h => h.toString().trim().toLowerCase());
 
             // Helper to find column index (case-insensitive)
@@ -109,15 +111,16 @@ function doGet(e) {
             // Skip header row
             for (let i = 1; i < data.length; i++) {
                 const row = data[i];
+                const dRow = displayData[i];
                 transactions.push({
                     row: i + 1,
                     sheetName: targetSheetName,
                     date: dateIdx > -1 ? row[dateIdx] : '',
                     amount: amountIdx > -1 ? row[amountIdx] : 0,
-                    category: catIdx > -1 ? row[catIdx] : '',
-                    'sub category': subCatIdx > -1 ? row[subCatIdx] : '',
-                    description: descIdx > -1 ? row[descIdx] : '',
-                    type: typeIdx > -1 ? row[typeIdx] : 'Expense'
+                    category: catIdx > -1 ? dRow[catIdx] : '',
+                    'sub category': subCatIdx > -1 ? dRow[subCatIdx] : '',
+                    description: descIdx > -1 ? dRow[descIdx] : '',
+                    type: typeIdx > -1 ? dRow[typeIdx] : 'Expense'
                 });
             }
         }
