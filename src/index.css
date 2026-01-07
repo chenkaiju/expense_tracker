@@ -25,6 +25,43 @@ body {
   display: flex;
   justify-content: center;
   overflow-x: hidden;
+  position: relative;
+}
+
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: -1;
+  opacity: 0.4;
+}
+
+body::before {
+  background: #6366f1;
+  top: -50px;
+  right: -50px;
+  animation: float 20s infinite alternate;
+}
+
+body::after {
+  background: #a855f7;
+  bottom: -50px;
+  left: -50px;
+  animation: float 25s infinite alternate-reverse;
+}
+
+@keyframes float {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  100% {
+    transform: translate(20px, 40px);
+  }
 }
 
 #root {
@@ -32,7 +69,8 @@ body {
   max-width: 500px;
   padding: 20px;
   padding-bottom: 100px;
-  /* Space for fab */
+  position: relative;
+  z-index: 1;
 }
 
 /* Setup/Login Screen */
@@ -42,7 +80,9 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--bg-dark);
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -51,9 +91,11 @@ body {
 }
 
 .setup-card {
-  background: var(--card-bg);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   padding: 2rem;
-  border-radius: 1rem;
+  border-radius: 24px;
   width: 100%;
   max-width: 400px;
   text-align: center;
@@ -74,9 +116,9 @@ body {
 .url-input {
   width: 100%;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.05);
   color: white;
   margin-bottom: 1rem;
   font-size: 1rem;
@@ -90,17 +132,20 @@ body {
 .save-btn {
   width: 100%;
   padding: 12px;
-  background: var(--primary);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: white;
-  border: none;
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .save-btn:hover {
-  background: var(--primary-dark);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 h1,
@@ -111,10 +156,10 @@ h3 {
 }
 
 .glass-card {
-  background: var(--card-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
   padding: 24px;
   margin-bottom: 20px;
@@ -122,10 +167,11 @@ h3 {
 }
 
 .balance-card {
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
   color: white;
   text-align: center;
-  padding: 20px 24px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .balance-label {
@@ -139,6 +185,7 @@ h3 {
 .balance-amount {
   font-size: 2.25rem;
   font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .stats-grid {
@@ -288,8 +335,8 @@ input:focus {
 .btn {
   width: 100%;
   padding: 14px;
-  border-radius: 12px;
-  border: none;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
@@ -297,34 +344,45 @@ input:focus {
 }
 
 .btn-primary {
-  background: var(--primary);
+  background: rgba(99, 102, 241, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: white;
+  border: 1px solid rgba(99, 102, 241, 0.3);
 }
 
 .btn-primary:active {
-  background: var(--primary-hover);
+  background: rgba(99, 102, 241, 0.5);
   transform: translateY(2px);
 }
 
 /* Floating Action Button */
 .fab {
   position: fixed;
-  bottom: 30px;
+  bottom: 90px;
   left: 50%;
   transform: translateX(-50%);
   width: 64px;
   height: 64px;
   border-radius: 32px;
-  background: var(--primary);
+  background: rgba(99, 102, 241, 0.5);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   color: white;
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 32px;
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
-  border: none;
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
   z-index: 100;
+  transition: all 0.2s;
+}
+
+.fab:active {
+  transform: translateX(-50%) scale(0.9);
+  background: rgba(99, 102, 241, 0.7);
 }
 
 /* Modal */
@@ -422,13 +480,24 @@ input:focus {
 }
 
 .nav-item.active {
-  color: var(--primary);
+  color: white;
 }
 
 .nav-item.active svg {
   opacity: 1;
-  filter: drop-shadow(0 0 8px var(--primary));
+  filter: drop-shadow(0 0 12px white);
   transform: translateY(-2px);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 12px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 0 10px white;
 }
 
 /* Statistics View Animation */
