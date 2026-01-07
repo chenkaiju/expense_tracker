@@ -94,30 +94,30 @@ function doGet(e) {
 
         if (targetSheet) {
             const data = targetSheet.getDataRange().getValues();
-            const headers = data[0];
+            const headers = data[0].map(h => h.toString().trim().toLowerCase());
 
             // Helper to find column index (case-insensitive)
-            const getColIndex = (name) => headers.findIndex(h => h.toString().toLowerCase() === name.toLowerCase());
+            const getColIndex = (name) => headers.indexOf(name.toLowerCase());
 
-            const dateIdx = getColIndex('Date');
-            const amountIdx = getColIndex('Amount');
-            const catIdx = getColIndex('Category');
-            const subCatIdx = getColIndex('Sub Category');
-            const descIdx = getColIndex('Description');
-            const typeIdx = getColIndex('Type');
+            const dateIdx = getColIndex('date');
+            const amountIdx = getColIndex('amount');
+            const catIdx = getColIndex('category');
+            const subCatIdx = getColIndex('sub category');
+            const descIdx = getColIndex('description');
+            const typeIdx = getColIndex('type');
 
             // Skip header row
             for (let i = 1; i < data.length; i++) {
                 const row = data[i];
                 transactions.push({
-                    row: i + 1, // 1-based row index for updates/deletes
+                    row: i + 1,
                     sheetName: targetSheetName,
-                    date: row[dateIdx],
-                    amount: row[amountIdx],
-                    category: row[catIdx],
+                    date: dateIdx > -1 ? row[dateIdx] : '',
+                    amount: amountIdx > -1 ? row[amountIdx] : 0,
+                    category: catIdx > -1 ? row[catIdx] : '',
                     'sub category': subCatIdx > -1 ? row[subCatIdx] : '',
-                    description: row[descIdx],
-                    type: row[typeIdx]
+                    description: descIdx > -1 ? row[descIdx] : '',
+                    type: typeIdx > -1 ? row[typeIdx] : 'Expense'
                 });
             }
         }
@@ -181,13 +181,17 @@ function doPost(e) {
 
             if (!sheet) throw new Error(`Sheet '${targetSheetName}' not found`);
 
-            const headers = sheet.getDataRange().getValues()[0];
+            const headers = sheet.getDataRange().getValues()[0].map(h => h.toString().trim().toLowerCase());
             const rowIndex = parseInt(params.row);
 
             headers.forEach((header, i) => {
-                const key = header.toLowerCase();
+                const key = header; // already lowercase/trimmed
                 if (params[key] !== undefined) {
                     sheet.getRange(rowIndex, i + 1).setValue(params[key]);
+                }
+                // Also handle title-case sub category parameter if needed
+                if (key === 'sub category' && params.subCategory !== undefined) {
+                    sheet.getRange(rowIndex, i + 1).setValue(params.subCategory);
                 }
             });
             return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Row updated' }))
@@ -212,10 +216,11 @@ function doPost(e) {
         const dateStr = params.date || new Date().toISOString().split('T')[0]; // YYYY-MM-DD
         const { sheet } = getTargetSheetForDate(dateStr);
 
-        const headers = sheet.getDataRange().getValues()[0];
+        const headers = sheet.getDataRange().getValues()[0].map(h => h.toString().trim().toLowerCase());
         const newRow = headers.map(header => {
-            const key = header.toLowerCase();
+            const key = header;
             let val = params[key];
+            if (key === 'sub category' && val === undefined) val = params.subCategory;
             if (key === 'date' && !val) val = new Date();
             return val !== undefined ? val : "";
         });

@@ -105,23 +105,16 @@ function App() {
     try {
       const data = await fetchTransactions(year, month);
       if (Array.isArray(data)) {
-        // Normalize keys and map standard names
-        const normalizedData = data.map((item, index) => {
-          const newItem = { id: index }; // Fallback ID if none exists
-          Object.keys(item).forEach(key => {
-            const lowerKey = key.toLowerCase();
-            if (lowerKey.includes('date')) newItem.date = item[key];
-            else if (lowerKey.includes('amount')) newItem.amount = item[key];
-            else if (lowerKey.includes('sub') && lowerKey.includes('category')) newItem['sub category'] = item[key];
-            else if (lowerKey.includes('category')) newItem.category = item[key];
-            else if (lowerKey.includes('description')) newItem.description = item[key];
-            else if (lowerKey.includes('type')) newItem.type = item[key];
-            else if (lowerKey === 'id' || lowerKey === 'row') newItem.id = item[key];
-            else if (lowerKey === 'sheetname') newItem.sheetName = item[key];
-            else newItem[lowerKey] = item[key];
-          });
-          return newItem;
-        });
+        const normalizedData = data.map((item, index) => ({
+          id: item.row || index,
+          sheetName: item.sheetName,
+          date: item.date,
+          amount: parseFloat(item.amount || 0),
+          category: item.category || '',
+          'sub category': item['sub category'] || '',
+          description: item.description || '',
+          type: (item.type || 'Expense').charAt(0).toUpperCase() + (item.type || 'Expense').slice(1).toLowerCase()
+        }));
         setTransactions(normalizedData.reverse());
       } else {
         console.error('Data received is not an array:', data);
@@ -219,7 +212,7 @@ function App() {
         });
       }
       setIsModalOpen(false);
-      setFormData({ amount: '', category: 'Food', description: '', type: 'Expense' });
+      setFormData({ amount: '', category: '食', subCategory: '早餐', description: '', type: 'Expense' });
       // Reload after addition/update
       setTimeout(() => loadData(currentDate.year, currentDate.month), 2000);
     } catch (error) {
