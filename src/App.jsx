@@ -82,14 +82,22 @@ function App() {
   }, [isSetup, isLoggedIn]);
 
   const loadMonths = async () => {
-    // Simple generator for now to avoid extra api call latency on load:
+    // Generate months for the full current year (Jan - Dec)
     const months = [];
-    const today = new Date();
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      months.push(`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`);
+    const currentYear = new Date().getFullYear();
+    for (let m = 12; m >= 1; m--) {
+      months.push(`${currentYear}-${m.toString().padStart(2, '0')}`);
     }
-    setAvailableMonths(months);
+
+    try {
+      // Also fetch actual months from backend to include history or other years
+      const dynamicMonths = await fetchAvailableMonths();
+      // Merge and unique
+      const merged = Array.from(new Set([...months, ...dynamicMonths])).sort().reverse();
+      setAvailableMonths(merged);
+    } catch (e) {
+      setAvailableMonths(months);
+    }
   };
 
   const handleDateChange = (e) => {
