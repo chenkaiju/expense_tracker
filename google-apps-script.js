@@ -128,8 +128,10 @@ function doGet(e) {
         // Legacy support: If user specifically asks for 'all' or we want to include legacy, we could.
         // But for optimization, let's strictly return the requested month.
 
-        return ContentService.createTextOutput(JSON.stringify(transactions))
-            .setMimeType(ContentService.MimeType.JSON);
+        return ContentService.createTextOutput(JSON.stringify({
+            version: "v2-display-fix",
+            data: transactions
+        })).setMimeType(ContentService.MimeType.JSON);
 
     } catch (e) {
         return ContentService.createTextOutput(JSON.stringify({ error: e.toString() }))

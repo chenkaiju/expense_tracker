@@ -103,7 +103,8 @@ function App() {
     if (!apiUrl) return;
     setLoading(true);
     try {
-      const data = await fetchTransactions(year, month);
+      const response = await fetchTransactions(year, month);
+      const data = response.data || response; // Handle { version, data } or legacy array
       if (Array.isArray(data)) {
         const normalizedData = data.map((item, index) => ({
           id: item.row || index,
