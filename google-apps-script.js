@@ -192,11 +192,16 @@ function doPost(e) {
             headers.forEach((header, i) => {
                 const key = header; // already lowercase/trimmed
                 if (params[key] !== undefined) {
-                    sheet.getRange(rowIndex, i + 1).setValue(params[key]);
+                    let val = params[key];
+                    // Force plain text for specific columns to avoid auto-conversion (like 7-11 -> date)
+                    if (['description', 'category', 'sub category'].includes(key)) {
+                        val = "'" + val;
+                    }
+                    sheet.getRange(rowIndex, i + 1).setValue(val);
                 }
                 // Also handle title-case sub category parameter if needed
                 if (key === 'sub category' && params.subCategory !== undefined) {
-                    sheet.getRange(rowIndex, i + 1).setValue(params.subCategory);
+                    sheet.getRange(rowIndex, i + 1).setValue("'" + params.subCategory);
                 }
             });
             return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Row updated' }))
@@ -227,6 +232,12 @@ function doPost(e) {
             let val = params[key];
             if (key === 'sub category' && val === undefined) val = params.subCategory;
             if (key === 'date' && !val) val = new Date();
+
+            // Force plain text for specific columns
+            if (val !== undefined && ['description', 'category', 'sub category'].includes(key)) {
+                val = "'" + val;
+            }
+
             return val !== undefined ? val : "";
         });
 
