@@ -18,24 +18,22 @@ export const setAuthToken = (token) => {
   localStorage.setItem('EXPENSE_TRACKER_TOKEN', token);
 };
 
-export const fetchTransactions = async (month = '') => {
+export const fetchTransactions = async (year, month) => {
   const url = getApiUrl();
   if (!url) return [];
 
   try {
     const token = getAuthToken();
-    // Allow token in query param
     let queryParams = `?t=${Date.now()}&token=${encodeURIComponent(token)}`;
-    if (month) {
-      queryParams += `&month=${encodeURIComponent(month)}`;
+
+    if (year && month) {
+      queryParams += `&year=${year}&month=${month}`;
     }
 
     const fullUrl = url.includes('?') ? url + queryParams.replace('?', '&') : url + queryParams;
 
     const response = await fetch(fullUrl);
 
-    // Handle auth error (Apps Script might return 200 with error JSON, or actual 401/403 if simple-auth implemented at script level differently)
-    // But our script returns 200 with JSON error for now.
     if (!response.ok) throw new Error('Network response was not ok');
 
     const data = await response.json();
@@ -53,21 +51,15 @@ export const fetchTransactions = async (month = '') => {
 export const fetchAvailableMonths = async () => {
   const url = getApiUrl();
   if (!url) return [];
-
   try {
     const token = getAuthToken();
-    const queryParams = `?action=get_months&t=${Date.now()}&token=${encodeURIComponent(token)}`;
+    const queryParams = `?action=get_months&token=${encodeURIComponent(token)}`;
     const fullUrl = url.includes('?') ? url + queryParams.replace('?', '&') : url + queryParams;
-
     const response = await fetch(fullUrl);
-    if (!response.ok) throw new Error('Network response was not ok');
-
     const data = await response.json();
-    if (data.error) throw new Error(data.error);
-
     return Array.isArray(data) ? data : [];
-  } catch (error) {
-    console.error('Fetch months error:', error);
+  } catch (e) {
+    console.error("Failed to fetch months", e);
     return [];
   }
 };

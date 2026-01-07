@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchTransactions, addTransaction, updateTransaction, deleteTransaction, setApiUrl as saveApiUrl, setAuthToken, fetchAvailableMonths } from './api';
+import { fetchTransactions, addTransaction, updateTransaction, deleteTransaction, setApiUrl as saveApiUrl, setAuthToken } from './api';
 import { CATEGORIES } from './txnCategories';
 import Statistics from './Statistics';
 import './index.css';
@@ -7,9 +7,6 @@ import './index.css';
 function App() {
   const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'statistics'
   const [transactions, setTransactions] = useState([]);
-  const [availableMonths, setAvailableMonths] = useState([]);
-  const [currentMonth, setCurrentMonth] = useState('');
-  const [dataCache, setDataCache] = useState({}); // Cache for monthly data: { 'YYYY-MM': [...] }
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_URL || localStorage.getItem('EXPENSE_TRACKER_API_URL') || '');
@@ -17,6 +14,13 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('EXPENSE_TRACKER_TOKEN'));
   const [inputToken, setInputToken] = useState('');
+
+  // Month/Year Selection State
+  const [currentDate, setCurrentDate] = useState(() => {
+    const now = new Date();
+    return { year: now.getFullYear(), month: (now.getMonth() + 1).toString().padStart(2, '0') };
+  });
+  const [availableMonths, setAvailableMonths] = useState([]);
 
   const [formData, setFormData] = useState({
     amount: '',
@@ -71,47 +75,35 @@ function App() {
 
   useEffect(() => {
     if (isSetup && isLoggedIn) {
-      initData();
+      loadMonths();
+      // Load data for current selection
+      loadData(currentDate.year, currentDate.month);
     }
   }, [isSetup, isLoggedIn]);
 
-  const initData = async () => {
+  const loadMonths = async () => {
+    // Simple generator for now to avoid extra api call latency on load:
+    const months = [];
+    const today = new Date();
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      months.push(`${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`);
+    }
+    setAvailableMonths(months);
+  };
+
+  const handleDateChange = (e) => {
+    const [y, m] = e.target.value.split('-');
+    const newDate = { year: parseInt(y), month: m };
+    setCurrentDate(newDate);
+    loadData(newDate.year, newDate.month);
+  };
+
+  const loadData = async (year, month) => {
     if (!apiUrl) return;
     setLoading(true);
     try {
-      // 1. Fetch available months first
-      const months = await fetchAvailableMonths();
-      setAvailableMonths(months);
-
-      // 2. Determine initial month (latest or current)
-      let initialMonth = '';
-      if (months.length > 0) {
-        initialMonth = months[0];
-      } else {
-        initialMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-      }
-      setCurrentMonth(initialMonth);
-
-      // 3. Load data for that month
-      await loadData(initialMonth);
-    } catch (err) {
-      console.error('Failed to init data:', err);
-    }
-    setLoading(false);
-  };
-
-  const loadData = async (monthToLoad, forceRefresh = false) => {
-    if (!apiUrl || !monthToLoad) return;
-
-    // Check cache first (if not forcing refresh)
-    if (!forceRefresh && dataCache[monthToLoad]) {
-      setTransactions(dataCache[monthToLoad]);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const data = await fetchTransactions(monthToLoad);
+      const data = await fetchTransactions(year, month);
       if (Array.isArray(data)) {
         // Normalize keys and map standard names
         const normalizedData = data.map((item, index) => {
@@ -130,16 +122,7 @@ function App() {
           });
           return newItem;
         });
-
-        const reversedData = normalizedData.reverse();
-        setTransactions(reversedData);
-
-        // Update cache
-        setDataCache(prev => ({
-          ...prev,
-          [monthToLoad]: reversedData
-        }));
-
+        setTransactions(normalizedData.reverse());
       } else {
         console.error('Data received is not an array:', data);
         setTransactions([]);
@@ -190,8 +173,8 @@ function App() {
       try {
         const rowId = transaction.row || transaction.id;
         await deleteTransaction(rowId, transaction.sheetName);
-        // Force reload after deletion
-        setTimeout(() => loadData(currentMonth, true), 2000);
+        // Reload after deletion
+        setTimeout(() => loadData(currentDate.year, currentDate.month), 2000);
       } catch (error) {
         alert('Error deleting transaction');
       }
@@ -237,8 +220,8 @@ function App() {
       }
       setIsModalOpen(false);
       setFormData({ amount: '', category: 'Food', description: '', type: 'Expense' });
-      // Force reload after addition/update
-      setTimeout(() => loadData(currentMonth, true), 2000);
+      // Reload after addition/update
+      setTimeout(() => loadData(currentDate.year, currentDate.month), 2000);
     } catch (error) {
       alert('Error saving transaction');
     }
@@ -254,6 +237,9 @@ function App() {
     .reduce((acc, curr) => acc + parseFloat(curr.amount || 0), 0);
 
   const balance = totalIncome - totalExpense;
+
+  // Format current selection for display
+  const currentMonthStr = `${currentDate.year}-${currentDate.month}`;
 
   if (!isLoggedIn) {
     return (
@@ -315,33 +301,31 @@ function App() {
 
   return (
     <div className="app-container" style={{ paddingBottom: '90px' }}>
-      {/* Month Selector in Header */}
+
+      {/* Month Selector */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '16px' }}>
-        <div className="month-selector-container">
-          <select
-            value={currentMonth}
-            onChange={(e) => {
-              const newMonth = e.target.value;
-              setCurrentMonth(newMonth);
-              loadData(newMonth);
-            }}
-            className="month-selector"
-          >
-            {availableMonths.map(month => (
-              <option key={month} value={month}>{month}</option>
-            ))}
-            {!availableMonths.includes(currentMonth) && currentMonth && (
-              <option value={currentMonth}>{currentMonth}</option>
-            )}
-          </select>
-          <div className="month-selector-arrow">▼</div>
-        </div>
+        <select
+          value={currentMonthStr}
+          onChange={handleDateChange}
+          style={{
+            padding: '8px',
+            borderRadius: '8px',
+            border: '1px solid var(--border-color)',
+            background: 'var(--card-bg)',
+            color: 'var(--text-primary)',
+            cursor: 'pointer'
+          }}
+        >
+          {availableMonths.map(m => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
       </div>
 
       {currentView === 'dashboard' ? (
         <>
           <div className="glass-card balance-card">
-            <div className="balance-label">Total Balance</div>
+            <div className="balance-label">Total Balance ({currentMonthStr})</div>
             <div className="balance-amount">${balance.toLocaleString()}</div>
           </div>
 
@@ -369,7 +353,7 @@ function App() {
               }} style={{ background: 'none', border: '1px solid var(--text-secondary)', padding: '4px 8px', borderRadius: '4px', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.75rem' }}>
                 Lock
               </button>
-              <button onClick={() => loadData(currentMonth, true)} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}>
+              <button onClick={() => loadData(currentDate.year, currentDate.month)} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}>
                 {loading ? '...' : 'Refresh'}
               </button>
             </div>
